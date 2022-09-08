@@ -1,0 +1,100 @@
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+  }
+  
+  function launchIntoFullscreen(element){
+      if(element.requestFullscreen) {
+      element.requestFullscreen();
+    } else if(element.mozRequestFullScreen) {
+      element.mozRequestFullScreen();
+    } else if(element.webkitRequestFullscreen) {
+      element.webkitRequestFullscreen();
+    } else if(element.msRequestFullscreen) {
+      element.msRequestFullscreen();
+    }
+  }
+  
+  gorillaTaskBuilder.onScreenStart((spreadsheet: any, rowIndex: number, screenIndex: number, row: any, container: string) => {
+  
+      if (row.display == 'fullscreen' && screenIndex == 1) {
+          launchIntoFullscreen(document.documentElement);
+      }
+      else if (row.display == 'final_score' && screenIndex == 0) {
+          _accuracy = gorilla.retrieve('accuracy', 0, true);
+          var percentile: number = 0;
+          if (_accuracy > 85) {
+              percentile = 15;
+          }
+          else if (_accuracy > 85) {
+              percentile = 15;
+          }
+          else if (_accuracy > 75) {
+              percentile = 25;
+          }
+          else if (_accuracy > 65) {
+              percentile = 35;
+          }
+          else if (_accuracy > 55) {
+              percentile = 45;
+          }
+          else if (_accuracy > 45) {
+              percentile = 55;
+          }
+          else if (_accuracy > 35) {
+              percentile = 65;
+          }
+          else if (_accuracy > 25) {
+              percentile = 75;
+          }
+          else {
+              percentile = 15;
+          }
+          var comp_percentile: number = 100 - percentile;
+          gorilla.storeMany({'percentile': percentile, 'comp_percentile': comp_percentile}, true)
+      }
+  })
+  
+  gorillaTaskBuilder.preProcessSpreadsheet((spreadsheet: any[]) => {
+      var assignedLeft = gorilla.retrieve('Left', null);
+      var assignedRight = gorilla.retrieve('Right', null);
+      var assignedUp = gorilla.retrieve('Up', null);
+      var assignedDown = gorilla.retrieve('Down', null);
+      
+      gorilla.storeMany({'recent_correct': 0, 'recent_incorrect': 0, 'recent_total': 0}, true);
+      
+      if (!assignedLeft) {
+          var choices = ['Blue', 'Red', 'Green', 'Yellow'];
+          shuffleArray(choices);
+          
+          assignedLeft = choices[0];
+          assignedRight = choices[1];
+          assignedUp = choices[2];
+          assignedDown = choices[3];
+          
+          gorilla.storeMany({
+              'Left': assignedLeft,
+              'Right': assignedRight,
+              'Up': assignedUp,
+              'Down': assignedDown
+          }, true);
+      }
+      
+      var modifiedSpreadsheet = [];
+      
+      for (var i = 0; i < spreadsheet.length; i++) {
+          if (spreadsheet[i]['Left'] && spreadsheet[i]['Left'].length > 0){
+                  spreadsheet[i]['Left'] = assignedLeft;
+                  spreadsheet[i]['Right'] = assignedRight;
+                  spreadsheet[i]['Up'] = assignedUp;
+                  spreadsheet[i]['Down'] = assignedDown;
+                  modifiedSpreadsheet.push(spreadsheet[i]);
+          } else
+              modifiedSpreadsheet.push(spreadsheet[i]);
+      }
+      
+      return modifiedSpreadsheet;
+  });
+  
